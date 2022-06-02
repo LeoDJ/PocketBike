@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 include(FetchContent)
 
-project(LVGL-Linux-FB LANGUAGES C CXX)
+project(PocketBike-Display LANGUAGES C CXX)
 
 # Gather all source files from src directory
 file(GLOB sources CONFIGURE_DEPENDS 
@@ -10,7 +10,7 @@ file(GLOB sources CONFIGURE_DEPENDS
 )
 
 # Add them to the main executable
-add_executable(lvgl_fb ${sources})
+add_executable(pb_display ${sources})
 
 # Specify path to own LVGL config header
 set(LV_CONF_PATH
@@ -22,6 +22,5 @@ FetchContent_Declare(lvgl        GIT_REPOSITORY https://github.com/lvgl/lvgl    
 FetchContent_Declare(lv_drivers  GIT_REPOSITORY https://github.com/lvgl/lv_drivers)
 FetchContent_MakeAvailable(lvgl lv_drivers)
 
-
 # The target "MyFirmware" depends on LVGL
-target_link_libraries(lvgl_fb  PRIVATE lvgl::lvgl lvgl::demos lv_drivers)
+target_link_libraries(pb_display  PRIVATE lvgl::lvgl lvgl::demos lv_drivers)

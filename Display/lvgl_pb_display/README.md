@@ -1,5 +1,6 @@
-# CMake LVGL Linux Framebuffer Example
+# PocketBike Display
 
-Based on https://github.com/lvgl/lv_port_linux_frame_buffer and crudely hacked together, but works for my purposes and might be a starting point for other people too. (As I'm not very familiar with CMake and lvgl it took me quite some time until it worked at all).
+Build with `cmake CMakeLists.txt && make -j 8`
+Cross compile for Pi Zero with: `cmake CMakeLists.txt --toolchain toolchain_armhf.cmake && make -j 8`
 
-Run with `cmake CMakeLists.txt && make -j 8`
+Dependencies: `sudoapt install cmake pkg-config gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf`

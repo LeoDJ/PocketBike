@@ -7,6 +7,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "mock_pb_ui.h"
+
 #define DISP_BUF_SIZE (128 * 1024)
 
 int main(void)
@@ -33,25 +35,29 @@ int main(void)
     disp_drv.ver_res    = 160;
     lv_disp_drv_register(&disp_drv);
 
-    evdev_init();
-    static lv_indev_drv_t indev_drv_1;
-    lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
-    indev_drv_1.type = LV_INDEV_TYPE_POINTER;
+    // evdev_init();
+    // static lv_indev_drv_t indev_drv_1;
+    // lv_indev_drv_init(&indev_drv_1); /*Basic initialization*/
+    // indev_drv_1.type = LV_INDEV_TYPE_POINTER;
 
     /*This function will be called periodically (by the library) to get the mouse position and state*/
-    indev_drv_1.read_cb = evdev_read;
-    lv_indev_t *mouse_indev = lv_indev_drv_register(&indev_drv_1);
+    // indev_drv_1.read_cb = evdev_read;
+    // lv_indev_t *mouse_indev = lv_indev_drv_register(&indev_drv_1);
 
 
     /*Set a cursor for the mouse*/
-    LV_IMG_DECLARE(mouse_cursor_icon)
-    lv_obj_t * cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
-    lv_img_set_src(cursor_obj, &mouse_cursor_icon);           /*Set the image source*/
-    lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
+    // LV_IMG_DECLARE(mouse_cursor_icon)
+    // lv_obj_t * cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
+    // lv_img_set_src(cursor_obj, &mouse_cursor_icon);           /*Set the image source*/
+    // lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
 
 
     /*Create a Demo*/
-    lv_demo_widgets();
+    // lv_demo_widgets();
+    // lv_demo_benchmark();
+    // lv_demo_stress();
+
+    mock_pb_ui();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while(1) {

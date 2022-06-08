@@ -57,6 +57,16 @@ int main(void)
     // lv_demo_benchmark();
     // lv_demo_stress();
 
+    // lv_theme_t * mono = lv_theme_mono_init(lv_disp_get_default(), true, lv_theme_default_get()->font_normal);
+    // lv_disp_set_theme(lv_disp_get_default(), mono);
+
+    mock_pb_ui();
+
+    lv_theme_t * dark = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
+    dark->font_small = &lv_font_montserrat_10;
+    dark->font_large = &lv_font_montserrat_28;
+    lv_disp_set_theme(lv_disp_get_default(), dark);
+
     mock_pb_ui();
 
     /*Handle LitlevGL tasks (tickless mode)*/

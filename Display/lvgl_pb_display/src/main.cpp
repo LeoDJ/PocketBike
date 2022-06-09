@@ -10,6 +10,7 @@
 #include "mock_pb_ui.h"
 #include "widgets/vertical_bar.h"
 #include "widgets/numericalValue.h"
+#include "widgets/gauge.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -105,6 +106,11 @@ int main(void)
     batVolt->init("Batt\nVolt");
     batVolt->draw();
     batVolt->setValue(3.9*12);
+
+    Gauge *speed = new Gauge(cont, 4, 0, 4, 4);
+    speed->init(0, 50, 10, 2, 30, "km/h");
+    speed->draw();
+    speed->setValue(33.3);
 
 
 

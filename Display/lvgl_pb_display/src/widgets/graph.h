@@ -1,6 +1,7 @@
 #pragma once
 
 #include "widget.h"
+#include "stdio.h"
 
 // TODO: get implementations out of here
 class Graph : public Widget {
@@ -39,34 +40,48 @@ class Graph : public Widget {
     void draw() {
         lv_obj_t *container = lv_obj_create(_parent);
         lv_obj_set_grid_cell(container, LV_GRID_ALIGN_STRETCH, _xPos, _xSpan, LV_GRID_ALIGN_STRETCH, _yPos, _ySpan);
-        lv_obj_set_style_pad_all(container, 0, LV_PART_MAIN);
-        // lv_obj_set_style_bg_opa(container, LV_OPA_TRANSP, LV_PART_MAIN);
-        // lv_obj_set_style_border_opa(container, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(container, 3, LV_PART_MAIN);
 
+        // Create chart
         _chart = lv_chart_create(container);
-        lv_obj_align(_chart, LV_ALIGN_TOP_MID, 0, 3);
-        lv_obj_set_size(_chart, lv_pct(65), lv_pct(75));            // TODO: find better way to set size dynamically (length of text?)
-        lv_obj_set_style_pad_all(_chart, 0, LV_PART_MAIN);          // remove padding around actual data area
+        lv_obj_align(_chart, LV_ALIGN_TOP_MID, 0, 0);
+        lv_obj_set_size(_chart, lv_pct(100), lv_pct(100));          // Expand chart up until the padding (defined below)
+        lv_obj_set_style_pad_all(_chart, 0, LV_PART_MAIN);          // Remove padding around actual data area
         lv_chart_set_type(_chart, LV_CHART_TYPE_LINE);
-        lv_obj_set_style_size(_chart, 0, LV_PART_INDICATOR);        // no dots
-        lv_obj_set_style_text_font(_chart, lv_theme_default_get()->font_small, LV_PART_TICKS);
+        lv_obj_set_style_size(_chart, 0, LV_PART_INDICATOR);        // No dots
+        lv_obj_set_style_text_font(_chart, _legendFont, LV_PART_TICKS);
         lv_chart_set_point_count(_chart, _pointCount);
         lv_chart_set_range(_chart, LV_CHART_AXIS_PRIMARY_Y, _y1Axis.minVal, _y1Axis.maxVal);
         if (_useSecondaryAxis) {
             lv_chart_set_range(_chart, LV_CHART_AXIS_SECONDARY_Y, _y2Axis.minVal, _y2Axis.maxVal);
         }
         lv_chart_set_div_line_count(_chart, _calcMajorTickNumber(_y1Axis), _calcMajorTickNumber(_xAxis));
-        lv_obj_add_event_cb(_chart, _overridePartDrawing, LV_EVENT_DRAW_PART_BEGIN, this);
+        lv_obj_add_event_cb(_chart, _overridePartDrawing, LV_EVENT_DRAW_PART_BEGIN, this);  // Register callback for graph customizations (units and thicker zero line)
 
+        // Add series
         _y1Series = lv_chart_add_series(_chart, lv_theme_default_get()->color_primary, LV_CHART_AXIS_PRIMARY_Y);
         if (_useSecondaryAxis) {
             _y2Series = lv_chart_add_series(_chart, lv_theme_default_get()->color_secondary, LV_CHART_AXIS_SECONDARY_Y);
         }
 
-        lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_PRIMARY_X, 4, 2, _calcMajorTickNumber(_xAxis), _xAxis.minorIncrementNumber + 1, true, 40);
-        lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_PRIMARY_Y, 4, 2, _calcMajorTickNumber(_y1Axis), _y1Axis.minorIncrementNumber + 1, true, 20);
+        // Add ticks and labels
+        lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_PRIMARY_X, _majorTickLen, _minorTickLen, _calcMajorTickNumber(_xAxis), _xAxis.minorIncrementNumber + 1, true, 100);
+        lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_PRIMARY_Y, _majorTickLen, _minorTickLen, _calcMajorTickNumber(_y1Axis), _y1Axis.minorIncrementNumber + 1, true, 100);
         if (_useSecondaryAxis) {
-            lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_SECONDARY_Y, 4, 2, _calcMajorTickNumber(_y2Axis), _y2Axis.minorIncrementNumber + 1, true, 50);
+            lv_chart_set_axis_tick(_chart, LV_CHART_AXIS_SECONDARY_Y, _majorTickLen, _minorTickLen, _calcMajorTickNumber(_y2Axis), _y2Axis.minorIncrementNumber + 1, true, 100);
+        }
+
+        // Calculate size of legend to position the graph correctly, otherwise the ticks and labels would be drawn outside of the container
+        lv_point_t xLabelSize = _getSizeOfAxisLabel(_xAxis, _legendFont);
+        lv_obj_set_style_pad_bottom(container, xLabelSize.y + _majorTickLen, LV_PART_MAIN);
+        lv_obj_set_style_pad_right(container, xLabelSize.x / 2, LV_PART_MAIN); 
+
+        lv_coord_t additionalPadding = lv_obj_get_style_radius(container, LV_PART_MAIN) / 2 + _majorTickLen;
+        lv_coord_t y1LegendWidth = _getMaxWidthOfAxisLabel(_y1Axis, _legendFont) + additionalPadding;
+        lv_obj_set_style_pad_left(container, y1LegendWidth, LV_PART_MAIN);
+        if (_useSecondaryAxis) {
+            lv_coord_t y2LegendWidth = _getMaxWidthOfAxisLabel(_y2Axis, _legendFont) + additionalPadding;
+            lv_obj_set_style_pad_right(container, y2LegendWidth, LV_PART_MAIN);
         }
     }
 
@@ -80,6 +95,10 @@ class Graph : public Widget {
     lv_chart_series_t *_y1Series, *_y2Series;
 
     int32_t _y1ZeroTickNumber;  // the n-th tick (counted from the top) that is the zero line
+
+    const lv_coord_t _majorTickLen = 4;
+    const lv_coord_t _minorTickLen = 2;
+    const lv_font_t *_legendFont = lv_theme_default_get()->font_small;
 
 
 
@@ -125,5 +144,27 @@ class Graph : public Widget {
                     dsc->line_dsc->width = 1;
             }
         }
+    }
+
+    static lv_coord_t _getMaxWidthOfAxisLabel(graphAxisConfig_t axis, const lv_font_t *font) {
+        lv_coord_t maxWidth = 0;
+        char buf[64];
+        for (int i = 0; i < _calcMajorTickNumber(axis); i++) {
+            int offset = snprintf(buf, sizeof(buf), "%d", axis.minVal + i * axis.majorIncrementValue);
+            snprintf(buf + offset, sizeof(buf) - offset, axis.axisUnitText);
+            lv_coord_t width = lv_txt_get_width(buf, strlen(buf), font, 0, LV_TEXT_FLAG_NONE);
+            maxWidth = LV_MAX(maxWidth, width);
+        }
+        return maxWidth;
+    }
+
+    // used for X axis (shouldn't need a loop)
+    static lv_point_t _getSizeOfAxisLabel(graphAxisConfig_t axis, const lv_font_t *font) {
+        lv_point_t p;
+        char buf[64];
+        int offset = snprintf(buf, sizeof(buf), "%d", axis.maxVal);
+        snprintf(buf + offset, sizeof(buf) - offset, axis.axisUnitText);
+        lv_txt_get_size(&p, buf, font, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+        return p;
     }
 };

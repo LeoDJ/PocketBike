@@ -9,6 +9,7 @@
 
 #include "mock_pb_ui.h"
 #include "widgets/vertical_bar.h"
+#include "widgets/numericalValue.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -100,6 +101,10 @@ int main(void)
     bat->draw();
     bat->setValue(90);
 
+    NumericalValue *batVolt = new NumericalValue(cont, 1, 0, 3, 1);
+    batVolt->init("Batt\nVolt");
+    batVolt->draw();
+    batVolt->setValue(3.9*12);
 
 
 

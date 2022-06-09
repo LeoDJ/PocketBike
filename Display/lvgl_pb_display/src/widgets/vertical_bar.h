@@ -1,11 +1,13 @@
+#pragma once
+
 #include "widget.h"
-#include <stdio.h>
 
 // TODO: get implementations out of here
 class VerticalBar : public Widget {
   public:
     VerticalBar(lv_obj_t *parentGrid, uint8_t xPos, uint8_t yPos, uint8_t xSpan = 1, uint8_t ySpan = 1) : Widget(parentGrid, xPos, yPos, xSpan, ySpan) {}
 
+    // pass NULL for valueFmt to disable the numerical value on the bottom completely
     void init(const char *title, const char *valueFmt = "%2.0f%%") {
         _title = title;
         _valueFmt = valueFmt;
@@ -21,10 +23,10 @@ class VerticalBar : public Widget {
         // Create container
         lv_obj_t *container = lv_obj_create(_parent);
         lv_obj_set_grid_cell(container, LV_GRID_ALIGN_STRETCH, _xPos, _xSpan, LV_GRID_ALIGN_STRETCH, _yPos, _ySpan);
-        lv_obj_set_style_pad_all(container, 3, LV_PART_MAIN);               // decrease padding
+        lv_obj_set_style_pad_all(container, 3, LV_PART_MAIN);               // reduce padding
         lv_obj_set_style_opa(container, LV_OPA_TRANSP, LV_PART_SCROLLBAR);  // hide scrollbars
         lv_obj_set_flex_flow(container, LV_FLEX_FLOW_COLUMN);               // enable flex layout
-        lv_obj_set_style_pad_row(container, 3, LV_PART_MAIN);               // decrease padding between objects in flex layout
+        lv_obj_set_style_pad_row(container, 3, LV_PART_MAIN);               // reduce padding between objects in flex layout
         lv_obj_set_flex_align(container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
         // Title
@@ -58,6 +60,7 @@ class VerticalBar : public Widget {
         if (_valueFmt) {
             _valueLabel = lv_label_create(container);
             lv_label_set_text_fmt(_valueLabel, _valueFmt, 0);
+            lv_label_set_text(_valueLabel, "");
         }
     }
 

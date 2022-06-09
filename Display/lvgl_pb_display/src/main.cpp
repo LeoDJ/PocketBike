@@ -8,6 +8,7 @@
 #include <sys/time.h>
 
 #include "mock_pb_ui.h"
+#include "widgets/vertical_bar.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -60,14 +61,48 @@ int main(void)
     // lv_theme_t * mono = lv_theme_mono_init(lv_disp_get_default(), true, lv_theme_default_get()->font_normal);
     // lv_disp_set_theme(lv_disp_get_default(), mono);
 
-    mock_pb_ui();
+
+
+    // mock_pb_ui();
 
     lv_theme_t * dark = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
     dark->font_small = &lv_font_montserrat_10;
     dark->font_large = &lv_font_montserrat_28;
     lv_disp_set_theme(lv_disp_get_default(), dark);
 
-    mock_pb_ui();
+    // mock_pb_ui();
+
+    // TODO: make widget manager or sth
+    const int column_segments = 24;
+    const int row_segments = 4;
+
+    lv_coord_t col_dsc[column_segments + 1];
+    lv_coord_t row_dsc[row_segments + 1];
+
+    for (int i = 0; i < column_segments; i++) {
+        col_dsc[i] = LV_GRID_FR(1);
+    }
+    col_dsc[column_segments] = LV_GRID_TEMPLATE_LAST;
+    for (int i = 0; i < row_segments; i++) {
+        row_dsc[i] = LV_GRID_FR(1);
+    }
+    row_dsc[row_segments] = LV_GRID_TEMPLATE_LAST;
+
+    lv_obj_t * cont = lv_scr_act();
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+    lv_obj_set_style_pad_column(cont, 2, 0);
+    lv_obj_set_style_pad_row(cont, 2, 0);
+    lv_obj_set_style_pad_all(cont, 2, 0);
+
+
+    VerticalBar *bat = new VerticalBar(cont, 0, 0, 1, 4);
+    bat->init("Batt.");
+    bat->draw();
+    bat->setValue(90);
+
+
+
+
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while(1) {

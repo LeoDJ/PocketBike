@@ -11,6 +11,7 @@
 #include "widgets/vertical_bar.h"
 #include "widgets/numericalValue.h"
 #include "widgets/gauge.h"
+#include "widgets/graph.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -111,6 +112,17 @@ int main(void)
     speed->init(0, 50, 10, 2, 30, "km/h");
     speed->draw();
     speed->setValue(33.3);
+
+    Graph *graph = new Graph(cont, 8, 0, 8, 2);
+    graph->init(60, 
+        {.minVal = -60,  .maxVal = 0,   .majorIncrementValue = 10, .minorIncrementNumber = 3, .axisUnitText = "s"}, 
+        {.minVal = -100, .maxVal = 100, .majorIncrementValue = 50, .minorIncrementNumber = 1, .axisUnitText = "A"}, 
+        {.minVal = 0,    .maxVal = 50,  .majorIncrementValue = 25, .minorIncrementNumber = 1, .axisUnitText = "km/h"});
+    graph->draw();
+
+    for (int i = 0; i < 60; i++) {
+        graph->setValue(i*i/32-50, i*i/32);
+    }
 
 
 

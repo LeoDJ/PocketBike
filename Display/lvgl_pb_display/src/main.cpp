@@ -7,6 +7,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "config.h"
+#include "serialPort.hpp"
 #include "mock_pb_ui.h"
 #include "widgets/vertical_bar.h"
 #include "widgets/numericalValue.h"
@@ -67,6 +69,19 @@ int main(void)
 
 
     // mock_pb_ui();
+
+    SerialPort serial(serialPortPath, serialPortBaud);
+
+    const char testStr[] = "asdf1234!...";
+    printf("Serial bytes available before sending: %d\n", serial.available());
+    serial.writeBytes((uint8_t*)testStr, sizeof(testStr));
+    usleep(100000);
+    printf("Serial bytes available after sending: %d\n", serial.available());
+    uint8_t rcvBuf[serial.available()] = {0};
+    serial.readBytes(rcvBuf, serial.available());
+    printf("Serial bytes received: %s\n", rcvBuf);
+
+
 
     lv_theme_t * dark = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
     dark->font_small = &lv_font_montserrat_10;

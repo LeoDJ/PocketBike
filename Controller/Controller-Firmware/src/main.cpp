@@ -1,9 +1,8 @@
 #include <Arduino.h>
-
-#include <VescUart.h>
 #include <NeoPixelConnect.h>
 
 #include "config.h"
+#include "vesc.hpp"
 
 REDIRECT_STDOUT_TO(Serial); // activate printf
 
@@ -22,45 +21,14 @@ UART uart0_VESC(PIN_VESC_TX, PIN_VESC_RX);
 UART uart1_GPS(PIN_GPS_TX, PIN_GPS_RX);
 
 
-VescUart vesc;
-
 NeoPixelConnect led(PIN_WS2812, NUM_LEDS, WS2812_PIO, WS2812_PIO_SM);
-
-
-
-
-void vescPoll() {
-    if (vesc.getVescValues()) {
-        // vesc.printVescValues();
-        printf("vesc_raw_values;avgMotorCurrent=%.6g;avgInputCurrent=%.6g;dutyCycleNow=%.6g;rpm=%.6g;inpVoltage=%.6g;ampHours=%.6g;ampHoursCharged=%.6g;wattHours=%.6g;wattHoursCharged=%.6g;tachometer=%ld;tachometerAbs=%ld;tempMosfet=%.6g;tempMotor=%.6g;pidPos=%.6g;id=%d;error=%d;\n",
-            vesc.data.avgMotorCurrent,
-            vesc.data.avgInputCurrent,
-            vesc.data.dutyCycleNow,
-            vesc.data.rpm,
-            vesc.data.inpVoltage,
-            vesc.data.ampHours,
-            vesc.data.ampHoursCharged,
-            vesc.data.wattHours,
-            vesc.data.wattHoursCharged,
-            vesc.data.tachometer,
-            vesc.data.tachometerAbs,
-            vesc.data.tempMosfet,
-            vesc.data.tempMotor,
-            vesc.data.pidPos,
-            vesc.data.id,
-            vesc.data.error
-        );
-
-        // TODO: decide where to do the data processing and send respective values
-    }
-}
 
 
 void setup() {
     // Init VESC UART
     uart0_VESC.begin(VESC_BAUD);
     vesc.setSerialPort(&uart0_VESC);
-    // vesc.setDebugPort(Serial);
+    vesc.setDebugPort((arduino::Stream*)&_SerialUSB);
 
     uart1_GPS.begin(GPS_BAUD);
 
@@ -75,6 +43,8 @@ void setup() {
     led.neoPixelSetValue(2, 0, 0, 255);
     led.neoPixelSetValue(3, 255, 255, 255);
     led.neoPixelShow();
+
+    vesc.getMcConfValues();
 }
 
 uint32_t lastVescPoll = 0;

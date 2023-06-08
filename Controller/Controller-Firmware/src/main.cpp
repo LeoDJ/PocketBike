@@ -28,7 +28,7 @@ void setup() {
     // Init VESC UART
     uart0_VESC.begin(VESC_BAUD);
     vesc.setSerialPort(&uart0_VESC);
-    vesc.setDebugPort((arduino::Stream*)&_SerialUSB);
+    // vesc.setDebugPort((arduino::Stream*)&_SerialUSB);
 
     uart1_GPS.begin(GPS_BAUD);
 
@@ -43,8 +43,6 @@ void setup() {
     led.neoPixelSetValue(2, 0, 0, 255);
     led.neoPixelSetValue(3, 255, 255, 255);
     led.neoPixelShow();
-
-    vesc.getMcConfValues();
 }
 
 uint32_t lastVescPoll = 0;

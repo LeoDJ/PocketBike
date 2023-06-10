@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <NeoPixelConnect.h>
+#include "pinDefinitions.h"
 
 #include "config.h"
 #include "vesc.hpp"
@@ -34,8 +35,19 @@ void setup() {
 
     SerialUSB0_VESC.begin(0);
     SerialUSB1_GPS.begin(0);
+    SerialUSB2_BMS.begin(0);
 
     pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(PIN_LIGHT_SENSOR, INPUT);
+    pinMode(PIN_HEADLIGHT_HIGH, OUTPUT);
+    pinMode(PIN_HEADLIGHT_LOW, OUTPUT);
+    analogWrite(PIN_HEADLIGHT_LOW, 0); // init PWM
+    mbed::PwmOut* pwm = digitalPinToPwm(PIN_HEADLIGHT_LOW);
+    pwm->period_us(500);
+
+    // digitalWrite(PIN_HEADLIGHT_HIGH, HIGH);
+    // analogWrite(PIN_HEADLIGHT_LOW, HEADLIGHT_LOWBEAM_PWM);
+    
 
     // display test pattern
     led.neoPixelSetValue(0, 255, 0, 0);
@@ -74,7 +86,30 @@ void doUsbSerialPassthrough(USBSerial *usbSerial, UART *hwSerial, int usbSerialI
     }
 }
 
+// char serBuf[1024];
+// size_t serBufIdx = 0;
 
+// const char* cmds[] = {
+//     "set_outputs"
+// };
+
+// void handlePacket(const char* data, size_t len) {
+//     strcmp(data, cmds[0]);
+//     // ToDo
+// }
+
+// void serialLoop() {
+//     while (Serial.available()) {
+//         char c = Serial.read();
+//         serBuf[serBufIdx++] = c;
+//         if (serBufIdx == sizeof(serBuf)) {
+//             serBufIdx = 0; // err: overflow
+//         }
+//         if (c == '\n') {
+//             handlePacket(serBuf, serBufIdx);
+//         }
+//     }
+// }
 
 void loop() {
     if (millis() - lastVescPoll > VESC_POLL_INTERVAL) {
@@ -93,6 +128,7 @@ void loop() {
         // SerialUSB0_VESC.println("2");
         // SerialUSB1_GPS.println("3");
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+        SerialUSB2_BMS.println(analogRead(PIN_LIGHT_SENSOR));
     }
 
     for (int i = 0; i < usbSerialsNum; i++) {
@@ -108,5 +144,5 @@ void loop() {
 
     doUsbSerialPassthrough(&SerialUSB0_VESC, &uart0_VESC, 0);
     doUsbSerialPassthrough(&SerialUSB1_GPS, &uart1_GPS, 1);
-    
+    // serialLoop();
 }

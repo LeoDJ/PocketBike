@@ -3,11 +3,12 @@
 const int PIN_LIGHT_SENSOR = 28;
 const int PIN_HEADLIGHT_LOW = 20;
 const int PIN_HEADLIGHT_HIGH = 21;
+const int HEADLIGHT_LOWBEAM_PWM = 25;
 
 const int PIN_VESC_TX = 16;
 const int PIN_VESC_RX = 17;
 const int VESC_BAUD = 115200;
-const int VESC_POLL_INTERVAL = 200;     // ms
+const int VESC_POLL_INTERVAL = 100;     // ms
 
 const int PIN_GPS_TX = 4;
 const int PIN_GPS_RX = 5;

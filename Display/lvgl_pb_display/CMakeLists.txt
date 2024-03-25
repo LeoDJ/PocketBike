@@ -25,4 +25,4 @@ FetchContent_Declare(lv_drivers  GIT_REPOSITORY https://github.com/lvgl/lv_drive
 FetchContent_MakeAvailable(lvgl lv_drivers)
 
 # The target "MyFirmware" depends on LVGL
-target_link_libraries(pb_display  PRIVATE lvgl::lvgl lvgl::demos lv_drivers)
+target_link_libraries(pb_display  PRIVATE lvgl::lvgl lvgl::demos lv_drivers pthread)

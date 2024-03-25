@@ -59,6 +59,7 @@ class Gauge : public Widget {
             lv_obj_t * unitLabel = lv_label_create(_meter);
             lv_obj_align(unitLabel, LV_ALIGN_BOTTOM_MID, 0, LV_PCT(-30));
             lv_obj_set_style_text_font(unitLabel, lv_theme_default_get()->font_small, LV_PART_MAIN);
+            lv_obj_set_style_text_align(unitLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
             lv_label_set_text(unitLabel, _unitText);
         }
 

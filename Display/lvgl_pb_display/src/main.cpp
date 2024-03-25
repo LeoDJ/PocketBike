@@ -6,7 +6,11 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
+#include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
+#include <mutex>
 
 #include "config.h"
 #include "serialPort.hpp"
@@ -16,6 +20,7 @@
 #include "widgets/gauge.h"
 #include "widgets/graph.h"
 #include "dash.hpp"
+#include "util.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -23,6 +28,9 @@ SerialPort *serial;
 
 uint8_t serBuf[4096] = {0};
 size_t serBufPos = 0;
+
+std::string curIpStr, curSsidStr;
+std::mutex mutexIpSsid;
 
 struct ValuesSetupPackage {
     float           tempMosfet;
@@ -41,7 +49,7 @@ struct ValuesSetupPackage {
     float           distance;
     float           distanceAbs;
     float           pidPos;
-    uint8_t   error;
+    uint8_t         error;
     uint8_t         id;
     uint8_t         numVescs;
     float           wattHoursLeft;
@@ -116,6 +124,22 @@ void handleSerial() {
     }
 }
 
+// dirty hacked together IP/SSID polling. TODO: make better
+void updateIpSsidStrThread() {
+        while (true) {
+        // Update the global string
+        {
+            std::lock_guard<std::mutex> lock(mutexIpSsid);
+            // globalString = "Updated string at " + std::to_string(std::time(nullptr));
+            curIpStr = Util::getIPAddress();
+            curSsidStr = Util::getCurrentSSID();
+        }
+
+        // Sleep for 1 second
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 int main(void)
 {
     /*LittlevGL init*/
@@ -185,7 +209,7 @@ int main(void)
     lv_theme_t * dark = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
     dark->font_small = &lv_font_montserrat_10;
     dark->font_large = &lv_font_montserrat_28;
-    lv_disp_set_theme(lv_disp_get_default(), dark);
+    // lv_disp_set_theme(lv_disp_get_default(), dark);
 
     // mock_pb_ui();
 
@@ -212,6 +236,13 @@ int main(void)
     lv_obj_set_style_pad_all(cont, 2, 0);
 
     dashInit(cont);
+
+    std::cout << "IP addr: " << Util::getIPAddress() << std::endl;
+    std::cout << "SSID: " << Util::getCurrentSSID() << std::endl;
+    // GPS Fix etc
+
+    // Start a thread to periodically update SSID / IP
+    std::thread updaterThread(updateIpSsidStrThread);
 
 
 

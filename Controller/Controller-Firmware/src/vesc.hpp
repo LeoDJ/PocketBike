@@ -1,4 +1,5 @@
 #include <VescUart.h>
+#include <ArduinoJson.h>
 
 VescUart vesc;
 
@@ -43,6 +44,7 @@ void handleInputs(float gas, float brake) {
         
 }
 
+
 void vescPoll() {
 
     // if (vesc.getMcConfValues()) {
@@ -56,89 +58,55 @@ void vescPoll() {
     // }
 
     if (vesc.getSetupValues()) {
-        printf("vesc_setup_values;"
-            "tempMosfet=%.6g;"
-            "tempMotor=%.6g;"
-            "motorCurrent=%.6g;"
-            "inputCurrent=%.6g;"
-            "dutyCycleNow=%.6g;"
-            "rpm=%.6g;"
-            "speed=%.6g;"
-            "inpVoltage=%.6g;"
-            "batteryLevel=%.6g;"
-            "ampHours=%.6g;"
-            "ampHoursCharged=%.6g;"
-            "wattHours=%.6g;"
-            "wattHoursCharged=%.6g;"
-            "distance=%.6g;"
-            "distanceAbs=%.6g;"
-            "pidPos=%.6g;"
-            "error=%d;"
-            "id=%d;"
-            "numVescs=%d;"
-            "wattHoursLeft=%.6g;"
-            "odometer=%ld;"
-            "uptimeMs=%ld;\n",
-            vesc.valuesSetup.tempMosfet,
-            vesc.valuesSetup.tempMotor,
-            vesc.valuesSetup.motorCurrent,
-            vesc.valuesSetup.inputCurrent,
-            vesc.valuesSetup.dutyCycleNow,
-            vesc.valuesSetup.rpm,
-            vesc.valuesSetup.speed,
-            vesc.valuesSetup.inpVoltage,
-            vesc.valuesSetup.batteryLevel,
-            vesc.valuesSetup.ampHours,
-            vesc.valuesSetup.ampHoursCharged,
-            vesc.valuesSetup.wattHours,
-            vesc.valuesSetup.wattHoursCharged,
-            vesc.valuesSetup.distance,
-            vesc.valuesSetup.distanceAbs,
-            vesc.valuesSetup.pidPos,
-            vesc.valuesSetup.error,
-            vesc.valuesSetup.id,
-            vesc.valuesSetup.numVescs,
-            vesc.valuesSetup.wattHoursLeft,
-            vesc.valuesSetup.odometer,
-            vesc.valuesSetup.uptimeMs
-        );
+        JsonDocument doc;
+
+        doc["system"] = "vesc";
+        doc["type"] = "setup_values";
+        doc["timestamp_controller"] = millis();
+
+        JsonObject data = doc["data"].to<JsonObject>();
+        data["tempMosfet"] = vesc.valuesSetup.tempMosfet;
+        data["tempMotor"] = vesc.valuesSetup.tempMotor;
+        data["motorCurrent"] = vesc.valuesSetup.motorCurrent;
+        data["inputCurrent"] = vesc.valuesSetup.inputCurrent;
+        data["dutyCycleNow"] = vesc.valuesSetup.dutyCycleNow;
+        data["rpm"] = vesc.valuesSetup.rpm;
+        data["speed"] = vesc.valuesSetup.speed;
+        data["inpVoltage"] = vesc.valuesSetup.inpVoltage;
+        data["batteryLevel"] = vesc.valuesSetup.batteryLevel;
+        data["ampHours"] = vesc.valuesSetup.ampHours;
+        data["ampHoursCharged"] = vesc.valuesSetup.ampHoursCharged;
+        data["wattHours"] = vesc.valuesSetup.wattHours;
+        data["wattHoursCharged"] = vesc.valuesSetup.wattHoursCharged;
+        data["distance"] = vesc.valuesSetup.distance;
+        data["distanceAbs"] = vesc.valuesSetup.distanceAbs;
+        data["pidPos"] = vesc.valuesSetup.pidPos;
+        data["error"] = vesc.valuesSetup.error;
+        data["id"] = vesc.valuesSetup.id;
+        data["numVescs"] = vesc.valuesSetup.numVescs;
+        data["wattHoursLeft"] = vesc.valuesSetup.wattHoursLeft;
+        data["odometer"] = vesc.valuesSetup.odometer;
+        data["uptimeMs"] = vesc.valuesSetup.uptimeMs;
+
+        serializeJson(doc, Serial);
+        Serial.print('\n');
     }
 
     if (vesc.getDecodedAdcValues()) {
-        printf("vesc_decoded_adc_values;"
-            "decodedLevel=%ld;"
-            "voltage=%ld;"
-            "decodedLevel2=%ld;"
-            "voltage2=%ld;\n",
-            vesc.decodedAdc.decodedLevel,
-            vesc.decodedAdc.voltage,
-            vesc.decodedAdc.decodedLevel2,
-            vesc.decodedAdc.voltage2
-        );
+        JsonDocument doc;
+        doc["system"] = "vesc";
+        doc["type"] = "decoded_adc_values";
+        doc["timestamp_controller"] = millis();
+
+        JsonObject data = doc["data"].to<JsonObject>();
+        data["decodedLevel"] = vesc.decodedAdc.decodedLevel;
+        data["voltage"] = vesc.decodedAdc.voltage;
+        data["decodedLevel2"] = vesc.decodedAdc.decodedLevel2;
+        data["voltage2"] = vesc.decodedAdc.voltage2;
+
+        serializeJson(doc, Serial);
+        Serial.print('\n');
 
         handleInputs(vesc.decodedAdc.decodedLevel / 1000000.0, vesc.decodedAdc.decodedLevel2 / 1000000.0);
     }
-
-    // if (vesc.getVescValues()) {
-    //     // vesc.printVescValues();
-    //     printf("vesc_raw_values;avgMotorCurrent=%.6g;avgInputCurrent=%.6g;dutyCycleNow=%.6g;rpm=%.6g;inpVoltage=%.6g;ampHours=%.6g;ampHoursCharged=%.6g;wattHours=%.6g;wattHoursCharged=%.6g;tachometer=%ld;tachometerAbs=%ld;tempMosfet=%.6g;tempMotor=%.6g;pidPos=%.6g;id=%d;error=%d;\n",
-    //         vesc.data.avgMotorCurrent,
-    //         vesc.data.avgInputCurrent,
-    //         vesc.data.dutyCycleNow,
-    //         vesc.data.rpm,
-    //         vesc.data.inpVoltage,
-    //         vesc.data.ampHours,
-    //         vesc.data.ampHoursCharged,
-    //         vesc.data.wattHours,
-    //         vesc.data.wattHoursCharged,
-    //         vesc.data.tachometer,
-    //         vesc.data.tachometerAbs,
-    //         vesc.data.tempMosfet,
-    //         vesc.data.tempMotor,
-    //         vesc.data.pidPos,
-    //         vesc.data.id,
-    //         vesc.data.error
-    //     );
-    //     // TODO: decide where to do the data processing and send respective values
-    // }
 }

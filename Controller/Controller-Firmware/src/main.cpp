@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "vesc.hpp"
+#include "gps.hpp"
 
 REDIRECT_STDOUT_TO(Serial); // activate printf
 
@@ -130,6 +131,8 @@ void loop() {
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
         SerialUSB2_BMS.println(analogRead(PIN_LIGHT_SENSOR));
     }
+
+    gpsLoop();
 
     for (int i = 0; i < usbSerialsNum; i++) {
         if (usbSerials[i]->connected() != usbSerialsState[i]) {

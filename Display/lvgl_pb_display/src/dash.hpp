@@ -13,6 +13,8 @@ Gauge *speed, *rpm, *motCurGauge;
 Graph *graph;
 lv_obj_t *networkText;
 
+float topSpeedVal = 0;
+
 void dashInit(lv_obj_t *cont) {
     bat = new VerticalBar(cont, 0, 0, 1, 4);
     bat->init("Batt.");
@@ -118,7 +120,10 @@ void dashUpdate(float batPercent_, float escTemp_, float batVolt_, float batAmp_
     mileage->setValue((wh_ / 1000.0) / (distance_ / 100000.0));    // TODO: average
     distance->setValue(distance_ / 1000.0);
     range->setValue(0);     // TODO
-    topSpd->setValue(0);    // TODO
+    if (speed_ > topSpeedVal) {
+        topSpeedVal = speed_;
+        topSpd->setValue(topSpeedVal);
+    }
 
     // TODO: handle better
     int now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -128,5 +133,5 @@ void dashUpdate(float batPercent_, float escTemp_, float batVolt_, float batAmp_
     }
 
     std::lock_guard<std::mutex> lock(mutexIpSsid);
-    lv_label_set_text_fmt(networkText, "SSID: %s\nIP: %s", curSsidStr.c_str(), curIpStr.c_str());
+    lv_label_set_text_fmt(networkText, "SSID: %s\nIP: %s\nMQTT queued msgs: %lu", curSsidStr.c_str(), curIpStr.c_str(), curMqttQueued);
 }

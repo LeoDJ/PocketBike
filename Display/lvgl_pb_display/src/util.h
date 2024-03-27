@@ -1,21 +1,24 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <fstream>
+#include <iostream>
+#include <netinet/in.h>
+#include <string>
+#include <sys/socket.h>
 #include <unistd.h>
 
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 
 extern std::string curIpStr, curSsidStr;
 extern std::mutex mutexIpSsid;
+extern size_t curMqttQueued;
 
 class Util {
-    public:
-
+  public:
     static std::string getCurrentSSID() {
         std::string ssid;
         std::string command = "/usr/sbin/iwgetid -r"; // Command to retrieve SSID
@@ -92,5 +95,18 @@ class Util {
 
         return ipAddress;
     }
-};
 
+    static std::string getCurrentTimestamp() {
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto value = now_ms.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(value % std::chrono::seconds(1));
+
+        // Format time
+        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << std::put_time(std::gmtime(&now_c), "%Y-%m-%dT%H:%M:%S");
+        ss << '.' << std::setfill('0') << std::setw(3) << millis.count();
+        return ss.str();
+    }
+};

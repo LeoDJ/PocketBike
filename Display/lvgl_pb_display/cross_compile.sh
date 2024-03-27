@@ -7,5 +7,6 @@ export RASPBIAN_ROOTFS=$HOME/rpi/rootfs
 export PATH=/opt/cross-pi-gcc/bin:/opt/cross-pi-gcc/libexec/gcc/arm-linux-gnueabihf/8.3.0:$PATH
 export RASPBERRY_VERSION=1
 
-cmake CMakeLists.txt --toolchain toolchain_rpi.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
-make -j 12
+cmake CMakeLists.txt -B ./build -S . --toolchain toolchain_rpi.cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cd build
+make -j

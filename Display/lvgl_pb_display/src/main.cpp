@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <ArduinoJson.h>
 
 #include "config.h"
 #include "serialPort.hpp"
@@ -21,6 +22,8 @@
 #include "widgets/graph.h"
 #include "dash.hpp"
 #include "util.h"
+#include "vesc.h"
+#include "mqtt.hpp"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
@@ -31,33 +34,11 @@ size_t serBufPos = 0;
 
 std::string curIpStr, curSsidStr;
 std::mutex mutexIpSsid;
+size_t curMqttQueued;
 
-struct ValuesSetupPackage {
-    float           tempMosfet;
-    float           tempMotor;
-    float           motorCurrent;
-    float           inputCurrent;
-    float           dutyCycleNow;
-    float           rpm;
-    float           speed;
-    float           inpVoltage;
-    float           batteryLevel;
-    float           ampHours;
-    float           ampHoursCharged;
-    float           wattHours;
-    float           wattHoursCharged;
-    float           distance;
-    float           distanceAbs;
-    float           pidPos;
-    uint8_t         error;
-    uint8_t         id;
-    uint8_t         numVescs;
-    float           wattHoursLeft;
-    uint32_t        odometer;
-    uint32_t        uptimeMs;
-};
+Mqtt mq;
 
-ValuesSetupPackage vals;
+ValuesSetupPackage_t vals;
 
 // dirty hacked together serial handling. TODO: make better
 void handleSerial() {
@@ -70,54 +51,18 @@ void handleSerial() {
     std::string serBufStr((char*)serBuf, serBufPos);
     if (serBufStr.find('\n') != std::string::npos) {
 
-        sscanf((const char *)serBuf, "vesc_setup_values;"
-            "tempMosfet=%f;"
-            "tempMotor=%f;"
-            "motorCurrent=%f;"
-            "inputCurrent=%f;"
-            "dutyCycleNow=%f;"
-            "rpm=%f;"
-            "speed=%f;"
-            "inpVoltage=%f;"
-            "batteryLevel=%f;"
-            "ampHours=%f;"
-            "ampHoursCharged=%f;"
-            "wattHours=%f;"
-            "wattHoursCharged=%f;"
-            "distance=%f;"
-            "distanceAbs=%f;"
-            "pidPos=%f;"
-            "error=%hhu;"
-            "id=%hhu;"
-            "numVescs=%hhu;"
-            "wattHoursLeft=%f;"
-            "odometer=%ld;"
-            "uptimeMs=%ld;\n",
-            &vals.tempMosfet,
-            &vals.tempMotor,
-            &vals.motorCurrent,
-            &vals.inputCurrent,
-            &vals.dutyCycleNow,
-            &vals.rpm,
-            &vals.speed,
-            &vals.inpVoltage,
-            &vals.batteryLevel,
-            &vals.ampHours,
-            &vals.ampHoursCharged,
-            &vals.wattHours,
-            &vals.wattHoursCharged,
-            &vals.distance,
-            &vals.distanceAbs,
-            &vals.pidPos,
-            &vals.error,
-            &vals.id,
-            &vals.numVescs,
-            &vals.wattHoursLeft,
-            &vals.odometer,
-            &vals.uptimeMs
-        );
+        curMqttQueued = mq.getQueued();
 
-        dashUpdate(vals.batteryLevel, vals.tempMosfet, vals.inpVoltage, vals.inputCurrent, vals.speed, vals.rpm, vals.tempMotor, vals.distance, vals.motorCurrent, vals.wattHours);
+        JsonDocument doc;
+        deserializeJson(doc, serBuf);
+
+        if (doc["system"] == "vesc" && doc["type"] == "setup_values") {
+            vals = doc["data"];
+            dashUpdate(vals.batteryLevel, vals.tempMosfet, vals.inpVoltage, vals.inputCurrent, vals.speed, vals.rpm, vals.tempMotor, vals.distance, vals.motorCurrent, vals.wattHours);
+        }
+
+        // forward JSON packet to MQTT
+        mq.publishJson(doc);
 
         memset(serBuf, 0, sizeof(serBuf));
         serBufPos = 0;

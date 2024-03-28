@@ -18,7 +18,16 @@ extern std::mutex mutexIpSsid;
 extern size_t curMqttQueued;
 
 class Util {
+    static constexpr const char* GPS_FIX_STR[4] = {"FAIL", "---", "2D", "3D"};
   public:
+
+    static const char* gpsFix2Str(int fixId) {
+        if (!(fixId >= 0 && fixId <= 3)) {
+            fixId = 0;
+        }
+        return GPS_FIX_STR[fixId];
+    }
+
     static std::string getCurrentSSID() {
         std::string ssid;
         std::string command = "/usr/sbin/iwgetid -r"; // Command to retrieve SSID

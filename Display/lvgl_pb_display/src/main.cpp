@@ -40,32 +40,47 @@ Mqtt mq;
 
 ValuesSetupPackage_t vals;
 
-// dirty hacked together serial handling. TODO: make better
+// dirty hacked together serial handling.
 void handleSerial() {
-    int available = serial->available();
-    if (available + serBufPos < sizeof(serBuf)) {
-        serial->readBytes(serBuf + serBufPos, available);
-        serBufPos += available;
+
+    while (serial->available()) {
+        char c = serial->readByte();
+        serBuf[serBufPos] = c;
+        serBufPos++;
+
+        if (serBufPos >= sizeof(serBuf)) {
+            // start over
+            memset(serBuf, 0, sizeof(serBuf));
+            serBufPos = 0;
+            continue;   // if buffer is overfull, skip trying to parse it
+        }
+
+        if (c == '\n') {
+            JsonDocument doc;
+            auto status = deserializeJson(doc, serBuf);
+
+            if (status == ArduinoJson::DeserializationError::Ok) {
+                curMqttQueued = mq.getQueued();
+
+                if (doc["system"] == "vesc" && doc["type"] == "setup_values") {
+                    vals = doc["data"];
+                    dashUpdate(vals.batteryLevel, vals.tempMosfet, vals.inpVoltage, vals.inputCurrent, vals.speed, vals.rpm, vals.tempMotor, vals.distance, vals.motorCurrent, vals.wattHours);
+                }
+
+                dashUpdate(doc);
+
+                // forward JSON packet to MQTT
+                mq.publishJson(doc);
+            }
+
+            memset(serBuf, 0, sizeof(serBuf));
+            serBufPos = 0;
+        }
     }
 
     std::string serBufStr((char*)serBuf, serBufPos);
     if (serBufStr.find('\n') != std::string::npos) {
 
-        curMqttQueued = mq.getQueued();
-
-        JsonDocument doc;
-        deserializeJson(doc, serBuf);
-
-        if (doc["system"] == "vesc" && doc["type"] == "setup_values") {
-            vals = doc["data"];
-            dashUpdate(vals.batteryLevel, vals.tempMosfet, vals.inpVoltage, vals.inputCurrent, vals.speed, vals.rpm, vals.tempMotor, vals.distance, vals.motorCurrent, vals.wattHours);
-        }
-
-        // forward JSON packet to MQTT
-        mq.publishJson(doc);
-
-        memset(serBuf, 0, sizeof(serBuf));
-        serBufPos = 0;
     }
 }
 

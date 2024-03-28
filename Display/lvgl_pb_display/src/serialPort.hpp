@@ -74,6 +74,13 @@ class SerialPort {
         return bytes;
     }
 
+    // read single byte
+    char readByte() {
+        char byte;
+        read(_port, &byte, 1);
+        return byte;
+    }
+
     // read number of bytes into destination buffer returning actually read amount
     int readBytes(uint8_t *dest, size_t len) {
         return read(_port, dest, len);

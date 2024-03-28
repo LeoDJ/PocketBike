@@ -6,12 +6,13 @@
 
 #include <mutex>
 #include <chrono>
+#include <ArduinoJson.h>
 
 VerticalBar *bat, *tempBar;
 NumericalValue *batVolt, *batAmp, *escTemp, *motTemp, *mileage, *distance, *range, *topSpd;
 Gauge *speed, *rpm, *motCurGauge;
 Graph *graph;
-lv_obj_t *networkText;
+lv_obj_t *networkText, *additText;
 
 float topSpeedVal = 0;
 
@@ -96,13 +97,22 @@ void dashInit(lv_obj_t *cont) {
 
     lv_obj_t * networkTextContainer = lv_obj_create(cont);
     lv_obj_set_grid_cell(networkTextContainer, LV_GRID_ALIGN_STRETCH, 8, 8, LV_GRID_ALIGN_STRETCH, 3, 1);
-    lv_obj_set_style_pad_all(networkTextContainer, 3, LV_PART_MAIN);                   // reduce padding
+    lv_obj_set_style_pad_all(networkTextContainer, 1, LV_PART_MAIN);                   // reduce padding
     lv_obj_set_style_opa(networkTextContainer, LV_OPA_TRANSP, LV_PART_SCROLLBAR);      // hide scrollbars
 
     networkText = lv_label_create(networkTextContainer);
     lv_obj_set_style_text_font(networkText, lv_theme_default_get()->font_small, LV_PART_MAIN);
-    lv_label_set_text(networkText, "SSID: \nIP: ");
+    lv_label_set_text(networkText, "SSID: \nIP: \nMQTT queued msgs: ");
+    lv_obj_set_width(networkText, LV_PCT(66));
+    lv_obj_align(networkText, LV_ALIGN_LEFT_MID, 0, 0);
     // lv_obj_align(networkText, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+
+    additText = lv_label_create(networkTextContainer);
+    lv_obj_set_style_text_font(additText, lv_theme_default_get()->font_small, LV_PART_MAIN);
+    lv_label_set_text(additText, "GPS Speed: \nGPS Fix: ");
+    lv_obj_set_width(additText, LV_PCT(33));
+    lv_obj_align(additText, LV_ALIGN_RIGHT_MID, 0, 0);
+
 }
 
 time_t lastGraphUpdate = 0;
@@ -134,4 +144,26 @@ void dashUpdate(float batPercent_, float escTemp_, float batVolt_, float batAmp_
 
     std::lock_guard<std::mutex> lock(mutexIpSsid);
     lv_label_set_text_fmt(networkText, "SSID: %s\nIP: %s\nMQTT queued msgs: %lu", curSsidStr.c_str(), curIpStr.c_str(), curMqttQueued);
+
+}
+
+float gpsSpeed = 0, gpsAcc = -1;
+int gpsFix = 1;
+
+void dashUpdate(JsonDocument doc) {
+    std::string system = doc["system"];
+    std::string type = doc["type"];
+    if (system == "gps") {
+        if (type == "GSA") {
+            gpsFix = doc["data"]["fixType"];
+        }
+        else if (type == "RMC") {
+            gpsSpeed = doc["data"]["speed"];
+        }
+        else if (type == "GST") {
+            gpsAcc = doc["data"]["acc_m"];
+        }
+        lv_label_set_text_fmt(additText, "GPS Speed: %5.1f\nGPS Fix: %s\nGPS Acc: %5.1fm", gpsSpeed, Util::gpsFix2Str(gpsFix), gpsAcc);
+    }
+
 }

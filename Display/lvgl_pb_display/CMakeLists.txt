@@ -14,6 +14,8 @@ file(GLOB_RECURSE sources CONFIGURE_DEPENDS
 # Add them to the main executable
 add_executable(pb_display ${sources})
 
+set_property(TARGET pb_display PROPERTY CXX_STANDARD 17)
+
 # Specify path to own LVGL config header
 set(LV_CONF_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lv_conf.h

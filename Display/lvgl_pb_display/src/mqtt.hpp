@@ -7,7 +7,7 @@
 #include "config.h"
 
 class Mqtt {
-    static const int MAX_BUFFERED_MSGS = 1e6; // with around 100 bytes/msg, buffer up to 100MB
+    static const int MAX_BUFFERED_MSGS = 500e3; // with around 500 bytes/msg, buffer up to 250MB
     mqtt::async_client* client;
 
   public:

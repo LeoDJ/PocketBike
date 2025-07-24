@@ -30,6 +30,7 @@ class Mqtt {
         connOpts.set_automatic_reconnect(5, 30);
         connOpts.set_user_name(MQTT_USER);
         connOpts.set_password(MQTT_PASS);
+        connOpts.set_max_inflight(16);  // default is 64k, leading to massive slowdowns at around 14k queued messages
         // connOpts.set_ssl(sslopts);
 
         client->connect(connOpts);

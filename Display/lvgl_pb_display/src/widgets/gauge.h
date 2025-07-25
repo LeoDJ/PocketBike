@@ -4,7 +4,7 @@
 
 
 // Forward declaration (see below class)
-static void needle_anim_cb(void * var, int32_t v);
+static void updateNeedleValue_cb(void * var, int32_t v);
 
 
 // TODO: get implementations out of here
@@ -12,18 +12,19 @@ class Gauge : public Widget {
   public:
     Gauge(lv_obj_t *parentGrid, uint8_t xPos, uint8_t yPos, uint8_t xSpan = 1, uint8_t ySpan = 1) : Widget(parentGrid, xPos, yPos, xSpan, ySpan) {}
 
-    void init(int minVal, int maxVal, int majorTickIncrements, int minorTickIncrements, int redAreaBegin, const char* unitText, const char* valueFmt = "%4.1f") {
-        _minValue = minVal;
-        _maxValue = maxVal;
-        _majorTickIncrements = majorTickIncrements;
-        _minorTickIncrements = minorTickIncrements;
-        _redAreaBegin = redAreaBegin;
+    void init(int minVal, int maxVal, int majorTickIncrements, int minorTickIncrements, int redAreaBegin, const char* unitText, const char* valueFmt = "%4.1f", int fraction = 100) {
+        _minValue = minVal * fraction;
+        _maxValue = maxVal * fraction;
+        _majorTickIncrements = majorTickIncrements * fraction;
+        _minorTickIncrements = minorTickIncrements * fraction;
+        _redAreaBegin = redAreaBegin * fraction;
         _unitText = unitText;
         _valueFmt = valueFmt;
+        _fraction = fraction;
 
         lv_anim_init(&_anim);
-        lv_anim_set_exec_cb(&_anim, (lv_anim_exec_xcb_t)needle_anim_cb);
-        lv_anim_set_var(&_anim, this);  // pass this instance to needle_anim_cb for animation
+        lv_anim_set_exec_cb(&_anim, (lv_anim_exec_xcb_t)updateNeedleValue_cb);
+        lv_anim_set_var(&_anim, this);  // pass this instance to updateNeedleValue_cb for animation
         lv_anim_set_time(&_anim, UPDATE_RATE);
         lv_anim_set_path_cb(&_anim, lv_anim_path_ease_in_out);
     }
@@ -33,10 +34,12 @@ class Gauge : public Widget {
     }
 
     void setValue(float val) {
-        int valInt = val + 0.5; // round before converting to int
-        // lv_meter_set_indicator_value(_meter, _needle, valInt);
+        int valInt = (val * _fraction) + 0.5; // round before converting to int
+        
+        lv_meter_set_indicator_value(_meter, _needle, _anim.end_value); // snap needle to previous end position in case updates come in faster than the animation duration
         lv_anim_set_values(&_anim, _needle->start_value, valInt);
         lv_anim_start(&_anim);
+
         if (_valueFmt && _valueLabel) {
             lv_label_set_text_fmt(_valueLabel, _valueFmt, val);
         }
@@ -90,7 +93,17 @@ class Gauge : public Widget {
         // Needle
         _needle = lv_meter_add_needle_line(_meter, _scale, 4, lv_palette_main(LV_PALETTE_GREY), -10);
 
+        // Draw callback to override "multiplied" tick numbers due to fraction handling
+        lv_obj_add_event_cb(_meter, _meter_cb, LV_EVENT_DRAW_PART_BEGIN, &_fraction);
+    }
 
+    static void _meter_cb(lv_event_t * e) {
+        lv_obj_draw_part_dsc_t* dsc = (lv_obj_draw_part_dsc_t*)lv_event_get_param(e);
+        int fraction = *(int*)lv_event_get_user_data(e);
+
+        if (dsc->text != NULL) { // Filter major ticks...
+            snprintf(dsc->text, sizeof(dsc->text), "%d", dsc->value / fraction);
+        }
     }
 
   protected:
@@ -99,6 +112,7 @@ class Gauge : public Widget {
     // int _majorTicks, _minorTicks;
     int _majorTickIncrements, _minorTickIncrements;
     int _redAreaBegin;
+    int _fraction; // multiplier for values so gauge can display more increments between integers
 
     lv_obj_t *_meter;
     lv_obj_t *_valueLabel;
@@ -110,7 +124,7 @@ class Gauge : public Widget {
 };
 
 // Handler for the lv_anim_cb format (can't take 3 arguments)
-static void needle_anim_cb(void * var, int32_t v) {
+static void updateNeedleValue_cb(void * var, int32_t v) {
     Gauge* gauge = (Gauge*)var;
     gauge->updateNeedleValue(v);
 }

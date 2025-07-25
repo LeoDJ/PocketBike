@@ -14,7 +14,7 @@ Gauge *speed, *rpm, *motCurGauge;
 Graph *graph;
 lv_obj_t *networkText, *additText;
 
-float topSpeedVal = 0;
+float topSpeedVal = 0;  // m/s
 
 void dashInit(lv_obj_t *cont) {
     bat = new VerticalBar(cont, 0, 0, 1, 4);
@@ -132,7 +132,7 @@ void dashUpdate(float batPercent_, float escTemp_, float batVolt_, float batAmp_
     range->setValue(0);     // TODO
     if (speed_ > topSpeedVal) {
         topSpeedVal = speed_;
-        topSpd->setValue(topSpeedVal);
+        topSpd->setValue(topSpeedVal * 3.6);
     }
 
     // TODO: handle better

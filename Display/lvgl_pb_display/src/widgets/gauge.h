@@ -2,6 +2,11 @@
 
 #include "widget.h"
 
+
+// Forward declaration (see below class)
+static void needle_anim_cb(void * var, int32_t v);
+
+
 // TODO: get implementations out of here
 class Gauge : public Widget {
   public:
@@ -15,11 +20,23 @@ class Gauge : public Widget {
         _redAreaBegin = redAreaBegin;
         _unitText = unitText;
         _valueFmt = valueFmt;
+
+        lv_anim_init(&_anim);
+        lv_anim_set_exec_cb(&_anim, (lv_anim_exec_xcb_t)needle_anim_cb);
+        lv_anim_set_var(&_anim, this);  // pass this instance to needle_anim_cb for animation
+        lv_anim_set_time(&_anim, UPDATE_RATE);
+        lv_anim_set_path_cb(&_anim, lv_anim_path_ease_in_out);
+    }
+
+    void updateNeedleValue(int32_t value) {
+        lv_meter_set_indicator_value(_meter, _needle, value);
     }
 
     void setValue(float val) {
         int valInt = val + 0.5; // round before converting to int
-        lv_meter_set_indicator_value(_meter, _needle, valInt);
+        // lv_meter_set_indicator_value(_meter, _needle, valInt);
+        lv_anim_set_values(&_anim, _needle->start_value, valInt);
+        lv_anim_start(&_anim);
         if (_valueFmt && _valueLabel) {
             lv_label_set_text_fmt(_valueLabel, _valueFmt, val);
         }
@@ -87,6 +104,13 @@ class Gauge : public Widget {
     lv_obj_t *_valueLabel;
     lv_meter_indicator_t *_needle;
     lv_meter_scale_t *_scale;
+    lv_anim_t _anim;    // animation for smoother needle movement
 
 
 };
+
+// Handler for the lv_anim_cb format (can't take 3 arguments)
+static void needle_anim_cb(void * var, int32_t v) {
+    Gauge* gauge = (Gauge*)var;
+    gauge->updateNeedleValue(v);
+}

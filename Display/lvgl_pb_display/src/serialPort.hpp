@@ -69,6 +69,7 @@ class SerialPort {
 
     // Returns number of bytes available in RX buffer
     int available() {
+        if (_port == -1) return 0;  // return 0 if no port is open, so program doesn't freeze
         int bytes;
         ioctl(_port, FIONREAD, &bytes);
         return bytes;
@@ -96,5 +97,5 @@ class SerialPort {
     }
 
     private:
-    int _port;
+    int _port = -1;
 };

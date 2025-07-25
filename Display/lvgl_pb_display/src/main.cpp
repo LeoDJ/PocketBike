@@ -12,6 +12,12 @@
 #include <chrono>
 #include <mutex>
 #include <ArduinoJson.h>
+#include <signal.h>
+
+#if USE_SDL
+#include "sdl/sdl.h"
+#include <SDL2/SDL.h>
+#endif
 
 #include "config.h"
 #include "serialPort.hpp"
@@ -100,13 +106,43 @@ void updateIpSsidStrThread() {
     }
 }
 
+void simValuesThread() {
+    #if USE_SDL
+    while (true) {
+        auto now = std::chrono::system_clock::now();
+        auto duration = now.time_since_epoch();
+        auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+        speed->setValue(milliseconds % 50000 / 1000.0);
+
+
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    #endif
+}
+
+// Need to call the exit syscall instead of _exit, for gmon.out to correctly be created
+void signal_handler(int sig) {
+    exit(0);  
+}
+
 int main(void)
 {
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     /*LittlevGL init*/
     lv_init();
 
-    /*Linux frame buffer device init*/
-    fbdev_init();
+    #if USE_SDL
+        sdl_init();
+    #else
+        /*Linux frame buffer device init*/
+        fbdev_init();
+    #endif
 
     /*A small buffer for LittlevGL to draw the screen's content*/
     static lv_color_t buf[DISP_BUF_SIZE];
@@ -119,9 +155,13 @@ int main(void)
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.draw_buf   = &disp_buf;
-    disp_drv.flush_cb   = fbdev_flush;
     disp_drv.hor_res    = 960;
     disp_drv.ver_res    = 160;
+    #if USE_SDL
+        disp_drv.flush_cb   = sdl_display_flush;
+    #else
+        disp_drv.flush_cb   = fbdev_flush;
+    #endif
     lv_disp_drv_register(&disp_drv);
 
     // evdev_init();
@@ -203,7 +243,7 @@ int main(void)
 
     // Start a thread to periodically update SSID / IP
     std::thread updaterThread(updateIpSsidStrThread);
-
+    std::thread t_simValues(simValuesThread);
 
 
     /*Handle LitlevGL tasks (tickless mode)*/

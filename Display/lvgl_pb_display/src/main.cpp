@@ -19,6 +19,7 @@
 #include <SDL2/SDL.h>
 #endif
 
+#include "rpiGpio.h"
 #include "config.h"
 #include "serialPort.hpp"
 #include "mock_pb_ui.h"
@@ -46,6 +47,21 @@ Mqtt mq;
 
 ValuesSetupPackage_t vals;
 
+RpiGpio::GpioPin blWhite(PIN_BL_WHITE, RpiGpio::GpioPin::OUTPUT);
+RpiGpio::GpioPin blRed(PIN_BL_RED, RpiGpio::GpioPin::OUTPUT);
+
+bool _lastDark = false;
+void lvgl_set_theme(bool dark = false) {
+    lv_theme_t * theme = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), dark, LV_FONT_DEFAULT);
+    theme->font_small = &lv_font_montserrat_10;
+    theme->font_large = &lv_font_montserrat_28;
+    lv_disp_set_theme(lv_disp_get_default(), theme);
+    _lastDark = dark;
+
+    blWhite.write(!dark);   // active low
+    blRed.write(dark);
+}
+
 // dirty hacked together serial handling.
 void handleSerial() {
 
@@ -71,6 +87,14 @@ void handleSerial() {
                 if (doc["system"] == "vesc" && doc["type"] == "setup_values") {
                     vals = doc["data"];
                     dashUpdate(vals.batteryLevel, vals.tempMosfet, vals.inpVoltage, vals.inputCurrent, vals.speed, vals.rpm, vals.tempMotor, vals.distance, vals.motorCurrent, vals.wattHours);
+                }
+                else if(doc["system"] == "ctrl" && doc["type"] == "lever") {
+                    // handle functionality of lever codes
+                    int pulls = doc["data"]["lever_pulls"];
+                    if (pulls == 3) {
+                        // toggle dark/light theme
+                        lvgl_set_theme(!_lastDark);
+                    }
                 }
 
                 dashUpdate(doc);
@@ -106,6 +130,8 @@ void updateIpSsidStrThread() {
     }
 }
 
+// Simulate values
+// (Yes, I know I shouldn't do this in a thread. But the timing is easier and it's just for testing anyways :P)
 void simValuesThread() {
     #if USE_SDL
     while (true) {
@@ -130,7 +156,6 @@ void signal_handler(int sig) {
 
 int main(void)
 {
-
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
@@ -204,12 +229,7 @@ int main(void)
     // serial.readBytes(rcvBuf, serial.available());
     // printf("Serial bytes received: %s\n", rcvBuf);
 
-
-
-    lv_theme_t * dark = lv_theme_default_init(lv_disp_get_default(), lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
-    dark->font_small = &lv_font_montserrat_10;
-    dark->font_large = &lv_font_montserrat_28;
-    // lv_disp_set_theme(lv_disp_get_default(), dark);
+    lvgl_set_theme(false);
 
     // mock_pb_ui();
 

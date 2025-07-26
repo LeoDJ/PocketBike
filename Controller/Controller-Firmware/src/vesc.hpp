@@ -39,6 +39,18 @@ void handleInputs(float gas, float brake) {
                 headlightState = !headlightState;
                 break;
         }
+
+        if (transitionNum >= 4 && transitionNum % 2 == 0) {
+            JsonDocument doc;
+            doc["system"] = "ctrl";
+            doc["type"] = "lever";
+            doc["timestamp_controller"] = millis();
+            JsonObject data = doc["data"].to<JsonObject>();
+            data["lever_pulls"] = transitionNum / 2;
+            serializeJson(doc, Serial);
+            Serial.print('\n');
+        }
+
         transitionNum = 0;
     }
         

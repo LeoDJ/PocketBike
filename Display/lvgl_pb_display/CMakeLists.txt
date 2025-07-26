@@ -71,17 +71,17 @@ set(PAHO_MQTT_C_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/paho_mqtt_c
 
 FetchContent_Declare(
     paho_mqtt_cpp
-    GIT_REPOSITORY https://github.com/eclipse/paho.mqtt.cpp.git
-    GIT_TAG        v1.5.3  
+    # GIT_REPOSITORY https://github.com/eclipse/paho.mqtt.cpp.git
+    # GIT_TAG        v1.5.3  
     # GIT_REPOSITORY https://github.com/eclipse/paho.mqtt.cpp.git
     # GIT_TAG        v1.3.2   # 1.3.2 has problems when building the Paho C library statically (the newest master too :/)
-    # GIT_REPOSITORY https://github.com/LeoDJ/paho.mqtt.cpp.git
-    # GIT_TAG        678396803f4743a2511800119e5c930e2092bdc7   
+    GIT_REPOSITORY https://github.com/LeoDJ/paho.mqtt.cpp.git
+    GIT_TAG        f114ea8   # modified v1.5.3 with added get_buffered_messages_num()
 )
 FetchContent_MakeAvailable(paho_mqtt_cpp)
 
 
-target_link_libraries(pb_display  PRIVATE lvgl::lvgl lvgl::demos lv_drivers pthread ArduinoJson paho-mqttpp3-static)
+target_link_libraries(pb_display PRIVATE lvgl::lvgl lvgl::demos lv_drivers pthread ArduinoJson paho-mqttpp3-static)
 
 if(BUILD_SIM) 
     target_link_libraries(pb_display PRIVATE ${SDL2_LIBRARIES})

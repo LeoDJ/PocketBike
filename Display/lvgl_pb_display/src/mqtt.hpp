@@ -15,7 +15,14 @@ class Mqtt {
         printf("MQTT connecting... ");
         fflush(stdout);
 
-        client = new mqtt::async_client(MQTT_SERVER, "", MAX_BUFFERED_MSGS);
+        auto createOpts = mqtt::create_options_builder()
+            .server_uri(MQTT_SERVER)
+            .send_while_disconnected(true, true)
+            .max_buffered_messages(MAX_BUFFERED_MSGS)
+            .delete_oldest_messages()
+            .persist_qos0(true)
+            .finalize();
+        client = new mqtt::async_client(createOpts);
 
 
         // auto sslopts = mqtt::ssl_options_builder()
@@ -52,7 +59,7 @@ class Mqtt {
             serializeJson(doc, payload);
 
             mqtt::message_ptr msg = mqtt::make_message(topic, payload.c_str());
-            msg->set_qos(1);
+            msg->set_qos(0);
             msg->set_retained(retained);
             
             client->publish(msg);
@@ -60,6 +67,6 @@ class Mqtt {
     }
 
     size_t getQueued() {
-        return client->get_pending_delivery_tokens().size();
+        return client->get_buffered_messages_num();
     }
 };

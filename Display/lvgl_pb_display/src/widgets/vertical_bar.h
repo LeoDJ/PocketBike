@@ -8,7 +8,9 @@ class VerticalBar : public Widget {
     VerticalBar(lv_obj_t *parentGrid, uint8_t xPos, uint8_t yPos, uint8_t xSpan = 1, uint8_t ySpan = 1) : Widget(parentGrid, xPos, yPos, xSpan, ySpan) {}
 
     // pass NULL for valueFmt to disable the numerical value on the bottom completely
-    void init(const char *title, const char *valueFmt = "%2.0f%%") {
+    void init(int minVal, int maxVal, const char *title, const char *valueFmt = "%2.0f%%") {
+        _minVal = minVal;
+        _maxVal = maxVal;
         _title = title;
         _valueFmt = valueFmt;
     }
@@ -44,16 +46,20 @@ class VerticalBar : public Widget {
         lv_obj_set_style_radius(_bar, 3, LV_PART_INDICATOR);
         lv_bar_set_range(_bar, _minVal, _maxVal);
 
+        int span = _maxVal - _minVal;
+        int color1_pct = (_maxVal - std::get<int>(_colors[1])) * 255 / span;
+        int color2_pct = (_maxVal - std::get<int>(_colors[2])) * 255 / span;
+
         _gradient.dir = LV_GRAD_DIR_VER;
         _gradient.stops_count = 4;
-        _gradient.stops[0].color = _colors[0];
-        _gradient.stops[1].color = _colors[1];
-        _gradient.stops[2].color = _colors[1];
-        _gradient.stops[3].color = _colors[2];
-        _gradient.stops[0].frac = ((100 - _color2BeginVal) * 255 / 100);
-        _gradient.stops[1].frac = ((100 - _color2BeginVal + _gradientSize) * 255 / 100);
-        _gradient.stops[2].frac = ((100 - _color3BeginVal - _gradientSize) * 255 / 100);
-        _gradient.stops[3].frac = ((100 - _color3BeginVal) * 255 / 100);
+        _gradient.stops[0].color = lv_palette_main(std::get<lv_palette_t>(_colors[0]));
+        _gradient.stops[1].color = lv_palette_main(std::get<lv_palette_t>(_colors[1]));
+        _gradient.stops[2].color = lv_palette_main(std::get<lv_palette_t>(_colors[1]));
+        _gradient.stops[3].color = lv_palette_main(std::get<lv_palette_t>(_colors[2]));
+        _gradient.stops[0].frac = color1_pct;
+        _gradient.stops[1].frac = color1_pct + _gradientSize;
+        _gradient.stops[2].frac = color2_pct - _gradientSize;
+        _gradient.stops[3].frac = color2_pct;
         lv_obj_set_style_bg_grad(_bar, &_gradient, LV_PART_INDICATOR);
 
         // Numerical value
@@ -64,6 +70,12 @@ class VerticalBar : public Widget {
         }
     }
 
+    // set colors of the bar, starting from the top
+    // (first color stop is always 100%)
+    void setColors(std::array<std::tuple<lv_palette_t, int>, 3> colors) {
+        _colors = colors;
+    }
+
   protected:
     const char *_title;
     const char *_valueFmt;
@@ -72,12 +84,14 @@ class VerticalBar : public Widget {
     lv_obj_t *_valueLabel;
     lv_grad_dsc_t _gradient;
 
-    int _color2BeginVal = 30;
-    int _color3BeginVal = 10;
-    int _gradientSize = 5;
-    lv_color_t _colors[3] = { lv_palette_main(LV_PALETTE_GREEN),
-                              lv_palette_main(LV_PALETTE_YELLOW),
-                              lv_palette_main(LV_PALETTE_RED) };
+    // int _color2BeginVal = 30;
+    // int _color3BeginVal = 10;
+    int _gradientSize = 15;  // size of the actual gradient band between colors in 1/255
+    std::array<std::tuple<lv_palette_t, int>, 3> _colors = {{
+        { LV_PALETTE_GREEN,     100 },
+        { LV_PALETTE_YELLOW,    30  },
+        { LV_PALETTE_RED,       10  }
+    }};
     int _minVal = 0;
     int _maxVal = 100;
 };

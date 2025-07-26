@@ -18,13 +18,17 @@ float topSpeedVal = 0;  // m/s
 
 void dashInit(lv_obj_t *cont) {
     bat = new VerticalBar(cont, 0, 0, 1, 4);
-    bat->init("Batt.");
+    bat->init(0, 100, "Batt.");
     bat->draw();
     bat->setValue(90);
 
-    // TODO: color
     tempBar = new VerticalBar(cont, 23, 0, 1, 4);
-    tempBar->init("ESC", "%2.0f°C");
+    tempBar->init(20, 95, "ESC", "%2.0f°C");
+    tempBar->setColors({{
+        { LV_PALETTE_RED,       95  },
+        { LV_PALETTE_YELLOW,    80  },
+        { LV_PALETTE_GREEN,     50  }
+    }});
     tempBar->draw();
     tempBar->setValue(25.9);
 
@@ -39,7 +43,7 @@ void dashInit(lv_obj_t *cont) {
     batAmp->setValue(43);
 
     speed = new Gauge(cont, 4, 0, 4, 4);
-    speed->init(0, 50, 10, 2, 30, "km/h");
+    speed->init(0, 60, 10, 2, 40, "km/h");
     speed->draw();
     speed->setValue(33.3);
 
@@ -51,7 +55,7 @@ void dashInit(lv_obj_t *cont) {
     motCurGauge = new Gauge(cont, 16, 0, 4, 4);
     motCurGauge->init(-100, 100, 20, 10, 80, "Motor\nA", "%.1f");
     motCurGauge->draw();
-    motCurGauge->setValue(570);
+    motCurGauge->setValue(-42);
 
     graph = new Graph(cont, 8, 0, 8, 3);
     graph->init(60, 
@@ -105,6 +109,7 @@ void dashInit(lv_obj_t *cont) {
     lv_label_set_text(networkText, "SSID: \nIP: \nMQTT queued msgs: ");
     lv_obj_set_width(networkText, LV_PCT(66));
     lv_obj_align(networkText, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_label_set_long_mode(networkText, LV_LABEL_LONG_SCROLL_CIRCULAR );
     // lv_obj_align(networkText, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
     additText = lv_label_create(networkTextContainer);

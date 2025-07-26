@@ -58,8 +58,11 @@ void lvgl_set_theme(bool dark = false) {
     lv_disp_set_theme(lv_disp_get_default(), theme);
     _lastDark = dark;
 
-    blWhite.write(!dark);   // active low
-    blRed.write(dark);
+    try {
+        blWhite.write(!dark);   // active low
+        blRed.write(dark);
+    }
+    catch (...) {}
 }
 
 // dirty hacked together serial handling.
@@ -139,7 +142,7 @@ void simValuesThread() {
         auto duration = now.time_since_epoch();
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-        speed->setValue(milliseconds % 50000 / 1000.0);
+        speed->setValue(milliseconds % 60000 / 1000.0);
 
 
 
@@ -265,6 +268,7 @@ int main(void)
     std::thread updaterThread(updateIpSsidStrThread);
     std::thread t_simValues(simValuesThread);
 
+    dashUpdate(0.9, 65, 4.0*12, 43, 33.33, 570, 42, 1.23, -42, 0.1);
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while(1) {

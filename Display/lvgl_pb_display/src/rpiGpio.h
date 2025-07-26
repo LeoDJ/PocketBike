@@ -42,7 +42,11 @@ public:
         // Open GPIO chip (usually gpiochip0 on Raspberry Pi)
         chip_fd = open("/dev/gpiochip0", O_RDONLY);
         if (chip_fd < 0) {
-            throw std::runtime_error("Failed to open /dev/gpiochip0. Make sure you're in the 'gpio' group.");
+            // throw std::runtime_error("Failed to open /dev/gpiochip0. Make sure you're in the 'gpio' group.");
+
+            // Just print this error for now, for easier simulation on non-raspi targets
+            printf("Failed to open /dev/gpiochip0. Make sure you're in the 'gpio' group.");
+            return;
         }
 
         // Prepare line request
